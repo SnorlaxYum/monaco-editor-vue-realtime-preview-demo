@@ -2,7 +2,16 @@ const { createSSRApp } = require('vue')
 const { renderToString } = require('@vue/server-renderer')
 const server = require('express')()
 
+function vueTempParse(body) {
+  const template = /<template>([\s\S]+)<\/template>/.exec(body)[1]
+  const script = /<script>([\s\S]+)<\/script>/.exec(body)[1]
+  const style = /<style>([\s\S]+)<\/style>/.exec(body)[1]
+  // TODO: get members of script export default
+}
+
 server.get('*', async (req, res) => {
+  const { body } = req
+
   const app = createSSRApp({
     data() {
       return {
