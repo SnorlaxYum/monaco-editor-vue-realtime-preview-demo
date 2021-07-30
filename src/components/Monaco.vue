@@ -99,6 +99,8 @@ nextTick(async () => {
     body {
         background: black;
         font-size:15vw;
+        white-space: pre-wrap;
+        word-break: break-word;
     }
     div#user {
         color: white;
