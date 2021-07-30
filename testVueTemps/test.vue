@@ -11,8 +11,11 @@ export default {
 }
 </script>
 <style>
+    body {
+        background: black;
+        font-size:15vw;
+    }
     div {
         color: white;
-        background: black;
     }
 </style>

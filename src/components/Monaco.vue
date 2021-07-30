@@ -96,10 +96,13 @@ nextTick(async () => {
   }
   \<\/script\>
   <style>
-      div#user {
-          color: white;
-          background: black;
-      }
+    body {
+        background: black;
+        font-size:15vw;
+    }
+    div#user {
+        color: white;
+    }
   </style>`
   console.log(parseInt(getComputedStyle(leftRef.value).height) - parseInt(getComputedStyle(buttonsRef.value).height))
     editorRef.value.style.height = `${parseInt(getComputedStyle(leftRef.value).height) - parseInt(getComputedStyle(buttonsRef.value).height)}px`
