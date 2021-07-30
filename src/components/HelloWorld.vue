@@ -30,9 +30,6 @@ const countAdd = (e) => {
   state.count++
   console.log(e)
 }
-nextTick(() => {
-  console.log()
-})
 </script>
 
 <style scoped>

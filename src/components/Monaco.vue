@@ -7,12 +7,14 @@
       <button @click="preview">Preview</button>
     </div>
   </div>
-  <div id='preview' ref='previewRef'></div>
+  <iframe id="preview" ref="previewRef" :srcdoc="previewTemp" />
 </template>
 
 <script setup>
-import { defineProps, reactive, nextTick, onBeforeMount, ref } from 'vue'
+import { defineProps, reactive, ref, nextTick } from 'vue';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
+const previewTemp = `<html><head></head><body></body></html>`
 
 defineProps({
   msg: String
@@ -25,23 +27,6 @@ const editorRef = ref()
 const previewRef = ref()
 const buttonsRef = ref()
 let editorNow
-
-nextTick(() => {
-  if(state.editorLoaded) {
-    console.log('editor loaded')
-  } else {
-    const defaultCode = `<div>vue on the fly</div>`
-    editorRef.value.style.height = `${parseInt(getComputedStyle(leftRef.value).height) - parseInt(getComputedStyle(buttonsRef.value).height)}px`
-    editorNow = monaco.editor.create(editorRef.value, {
-      value: defaultCode,
-      language: 'vue',
-      theme: 'vs-dark'
-    });
-    const final = new Range().createContextualFragment(defaultCode)
-    
-    previewRef.value.appendChild(final)
-  }
-})
 
 function load(e) {
   const file = new FileReader()
@@ -61,15 +46,71 @@ function save(e) {
   a.click()
 }
 
-function preview(e) {
+async function preview(e) {
   const value = editorNow.getValue()
-  const final = new Range().createContextualFragment(value)
-  for(const child of [...previewRef.value.childNodes]) {
-    previewRef.value.removeChild(child)
+  const result = await fetch('/preview', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({value})
+    }
+    ).then(res => res.ok ? res.text() : 'error')
+  if(!previewRef.value.contentWindow.Vue) {
+    const vueScr = document.createElement('script')
+    vueScr.addEventListener('load', async e => {
+      console.log('Vue loaded.')
+      const final = new Range().createContextualFragment(result)
+      for(const child of [...previewRef.value.contentDocument.body.childNodes]) {
+        previewRef.value.contentDocument.body.removeChild(child)
+      }
+      previewRef.value.contentDocument.body.appendChild(final)
+    })
+    vueScr.src = `https://unpkg.com/vue@next`
+    console.log(previewRef.value.contentDocument.head)
+    previewRef.value.contentDocument.head.appendChild(vueScr)
+  } else {
+    const final = new Range().createContextualFragment(result)
+    for(const child of [...previewRef.value.contentDocument.body.childNodes]) {
+      previewRef.value.contentDocument.body.removeChild(child)
+    }
+    previewRef.value.contentDocument.body.appendChild(final)
   }
-  previewRef.value.appendChild(final)
 }
 
+
+nextTick(async () => {
+  if(state.editorLoaded) {
+    console.log('editor loaded')
+  } else {
+    const defaultCode = `<template>
+      <div id='user'>Current user is: {{ user }}</div>
+  </template>
+  <script>
+  export default {
+      data() {
+          return {
+              user: 'John Doe'
+          }
+      }
+  }
+  \<\/script\>
+  <style>
+      div#user {
+          color: white;
+          background: black;
+      }
+  </style>`
+  console.log(parseInt(getComputedStyle(leftRef.value).height) - parseInt(getComputedStyle(buttonsRef.value).height))
+    editorRef.value.style.height = `${parseInt(getComputedStyle(leftRef.value).height) - parseInt(getComputedStyle(buttonsRef.value).height)}px`
+    editorNow = monaco.editor.create(editorRef.value, {
+      value: defaultCode,
+      language: 'vue',
+      theme: 'vs-dark'
+    });
+    await preview()
+  }
+})
 </script>
 
 <style scoped>
@@ -86,5 +127,7 @@ a {
   grid-column: auto/span 1fr;
   text-align: left;
   overflow: auto;
+  width: 99.2%;
+  height: 99.2%;
 }
 </style>
